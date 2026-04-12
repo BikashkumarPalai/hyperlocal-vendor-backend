@@ -3,36 +3,38 @@ const Shop = require('../models/Shop')
 // Creating the shop 
 const createShop = async (req, res) => {
     try {
-        const { name, category, description, location, contact } = req.body;
+        const { name, category, description, address, contact, latitude, longitude } = req.body
 
-        if (!name || !category || !description || !location || !contact) {
-            return res.status(400).json({ message: "All field are required" })
+        if (!name || !category || !description || !address || !contact || !latitude || !longitude) {
+            return res.status(400).json({ message: 'All fields are required' })
         }
 
-        // If shop already exist 
         const existingShop = await Shop.findOne({ vendor: req.user.userId })
         if (existingShop) {
             return res.status(400).json({ message: 'You already have a shop' })
         }
 
-        // If not exist then create one 
         const shop = await Shop.create({
             vendor: req.user.userId,
             name,
             category,
             description,
-            location,
-            contact
+            contact,
+            location: {
+                type: 'Point',
+                coordinates: [parseFloat(longitude), parseFloat(latitude)],
+                address
+            }
         })
 
         res.status(201).json({ message: 'Shop created successfully', shop })
+
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message })
     }
 }
 
 // Finding the shop which is owned by vendor
-
 const getMyShop = async (req, res) => {
     try {
         const shop = await Shop.findOne({ vendor: req.user.userId })
@@ -69,5 +71,53 @@ const updateShop = async (req, res) => {
     }
 }
 
+// get all near by shops 
+const getAllShops = async (req, res) => {
+    try {
+        const { latitude, longitude, radius = 5000, category } = req.query
 
-module.exports = { createShop, getMyShop, updateShop }
+        let shops
+
+        if (latitude && longitude) {
+            let filter = {
+                location: {
+                    $near: {
+                        $geometry: {
+                            type: 'Point',
+                            coordinates: [parseFloat(longitude), parseFloat(latitude)]
+                        },
+                        $maxDistance: parseInt(radius)
+                    }
+                }
+            }
+            if (category) filter.category = category
+            shops = await Shop.find(filter)
+        } else {
+            let filter = {}
+            if (category) filter.category = category
+            shops = await Shop.find(filter).sort({ createdAt: -1 })
+        }
+
+        res.json({ shops })
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message })
+    }
+}
+
+// Get single shop by id (Public route)
+const getShopById = async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.id)
+        if (!shop) {
+            return res.status(404).json({ message: 'Shop not found' })
+        }
+        res.json({ shop })
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message })
+    }
+}
+
+
+
+module.exports = { createShop, getMyShop, updateShop, getAllShops, getShopById }

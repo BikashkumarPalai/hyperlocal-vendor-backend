@@ -5,6 +5,8 @@ const connectDB = require('./lib/mongoDB')
 const authRoutes = require('./routes/auth')
 const shopRoutes = require('./routes/shop')
 const productRoutes = require('./routes/product')
+const orderRoutes = require('./routes/order')
+const analyticsRoutes = require('./routes/analytics')
 
 dotenv.config()
 
@@ -12,6 +14,14 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
+
+
+app.use(cors({
+  origin: [
+    'http://localhost:5173'
+  ],
+  credentials: true
+}))
 
 // Conecting the database
 connectDB()
@@ -21,7 +31,11 @@ app.use('/api/auth', authRoutes)
 // For shop routers
 app.use('/api/shop', shopRoutes)
 // For product routers
-app.use('/api/product', shopRoutes)
+app.use('/api/product', productRoutes)
+// For order routes
+app.use('/api/order', orderRoutes)
+// For getting analytic like totalsale , mostsales_item
+app.use('/api/analytics', analyticsRoutes)
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is running' })

@@ -20,8 +20,16 @@ const shopSchema = new mongoose.Schema({
     required: true
   },
   location: {
-    type: String,
-    required: true
+    type: {             
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number],  // [longitude, latitude]
+      required: true
+    },
+    address: String   // Readable address
   },
   contact: {
     type: String,
@@ -32,5 +40,8 @@ const shopSchema = new mongoose.Schema({
     default: true
   }
 }, { timestamps: true })
+
+shopSchema.index({ location: '2dsphere' })
+
 
 module.exports = mongoose.model('Shop', shopSchema)

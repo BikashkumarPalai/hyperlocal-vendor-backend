@@ -96,5 +96,18 @@ const deleteProduct = async (req, res) => {
     }
 }
 
-module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct }
+// Get products by shop id (public)
+const getProductsByShop = async (req, res) => {
+    try {
+        const products = await Product.find({
+            shop: req.params.shopId,
+            isAvailable: true
+        })
+        res.json({ products })
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message })
+    }
+}
+
+module.exports = { addProduct, getMyProducts, updateProduct, deleteProduct, getProductsByShop }
 
