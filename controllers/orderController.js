@@ -1,17 +1,65 @@
 const Order = require('../models/Order')
 const Product = require('../models/Product')
 const Shop = require('../models/Shop')
+const razorpay = require('../lib/razorpay')
+const crypto = require('crypto')
 const getDistanceInKm = require('../lib/distance')
 
 const MAX_ORDER_RADIUS_KM = 10
 
-// Customer places order
-const placeOrder = async (req, res) => {
+// Step-1 creation of razorpay order
+const createPaymentOrder = async (req, res) => {
     try {
-        const { shop, items, totalPrice, customerLat, customerLng } = req.body
+        const { totalPrice } = req.body
 
-        if (!shop || !items || items.length === 0) {
-            return res.status(400).json({ message: 'Order details are required' })
+        if (!totalPrice) {
+            return res.status(400).json({ message: 'Total price is required' })
+        }
+
+        const options = {
+            amount: totalPrice * 100, // Razorpay needs amount in paise
+            currency: 'INR',
+            receipt: `receipt_${Date.now()}`
+        }
+
+        const paymentOrder = await razorpay.orders.create(options)     // Razorpay order
+
+        res.json({
+            orderId: paymentOrder.id,
+            amount: paymentOrder.amount,
+            currency: paymentOrder.currency,
+            keyId: process.env.RAZORPAY_KEY_ID
+        })
+
+    } catch (error) {
+        res.status(500).json({ message: 'Payment order creation failed', error: error.message })
+    }
+}
+
+
+// Step-2 verify the order using signature and save order
+const verifyPayment = async (req, res) => {
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            shop,
+            items,
+            totalPrice,
+            customerLat,
+            customerLng
+        } = req.body
+
+        // Verify signature
+        const body = razorpay_order_id + '|' + razorpay_payment_id
+        const expectedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest('hex')
+
+        if (expectedSignature !== razorpay_signature) {
+            return res.status(400).json({ message: 'Payment verification failed' })
         }
 
         // Check distance
@@ -20,18 +68,10 @@ const placeOrder = async (req, res) => {
             if (shopData?.location?.coordinates) {
                 const shopLng = shopData.location.coordinates[0]
                 const shopLat = shopData.location.coordinates[1]
-
-                const distance = getDistanceInKm(
-                    customerLat,
-                    customerLng,
-                    shopLat,
-                    shopLng
-                )
-
+                const distance = getDistanceInKm(customerLat, customerLng, shopLat, shopLng)
                 if (distance > MAX_ORDER_RADIUS_KM) {
                     return res.status(400).json({
-                        message: `This shop is too far from your location. You can only order from shops within ${MAX_ORDER_RADIUS_KM}km.`,
-                        distance: distance.toFixed(1)
+                        message: `Shop is too far. Only orders within ${MAX_ORDER_RADIUS_KM}km allowed.`
                     })
                 }
             }
@@ -50,15 +90,19 @@ const placeOrder = async (req, res) => {
             }
         }
 
+        // Save order
         const order = await Order.create({
             customer: req.user.userId,
             shop,
             items,
-            totalPrice
+            totalPrice,
+            paymentId: razorpay_payment_id,
+            paymentOrderId: razorpay_order_id,
+            isPaid: true  // Payment compelte then save 
         })
 
         res.status(201).json({
-            message: 'Order placed successfully',
+            message: 'Payment successful. Order placed!',
             order
         })
 
@@ -66,6 +110,8 @@ const placeOrder = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message })
     }
 }
+
+
 
 
 
@@ -138,4 +184,4 @@ const updateOrderStatus = async (req, res) => {
 }
 
 
-module.exports = { placeOrder, getMyOrders, getShopOrders, updateOrderStatus }
+module.exports = { createPaymentOrder, verifyPayment, getMyOrders, getShopOrders, updateOrderStatus }

@@ -31,7 +31,10 @@ const orderSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'accepted', 'rejected', 'completed'],
         default: 'pending'
-    }
+    },
+    paymentId: { type: String, default: null },
+    paymentOrderId: { type: String, default: null },
+    iisPaid: { type: Boolean, default: false }
 }, { timestamps: true })
 
 module.exports = mongoose.model('Order', orderSchema)
