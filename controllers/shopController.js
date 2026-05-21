@@ -74,7 +74,7 @@ const updateShop = async (req, res) => {
 // get all near by shops 
 const getAllShops = async (req, res) => {
     try {
-        const { latitude, longitude, radius = 5000, category } = req.query
+        const { latitude, longitude, radius = 10000, category } = req.query
 
         let shops
 
