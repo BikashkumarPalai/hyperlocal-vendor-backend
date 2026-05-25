@@ -20,6 +20,7 @@ const createShop = async (req, res) => {
             category,
             description,
             contact,
+            image: req.file?.path || '',
             location: {
                 type: 'Point',
                 coordinates: [parseFloat(longitude), parseFloat(latitude)],
@@ -54,18 +55,17 @@ const getMyShop = async (req, res) => {
 // Upadtion of shop
 const updateShop = async (req, res) => {
     try {
+        const updateData = { ...req.body }
+        if (req.file?.path) updateData.image = req.file.path    // If image update then only cloudinary url exist 
+
         const shop = await Shop.findOneAndUpdate(
             { vendor: req.user.userId },
-            req.body,      // updation occur with this data 
-            { new: true }  // return the updated user
+            updateData,
+            { new: true }
         )
 
-        if (!shop) {
-            return res.status(404).json({ message: 'Shop not found' })
-        }
-
+        if (!shop) return res.status(404).json({ message: 'Shop not found' })
         res.json({ message: 'Shop updated successfully', shop })
-
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message })
     }

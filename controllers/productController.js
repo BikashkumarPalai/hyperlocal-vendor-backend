@@ -24,7 +24,8 @@ const addProduct = async (req, res) => {
             price,
             unit,
             stock,
-            description
+            description,
+            image: req.file?.path || ''
         })
 
         res.status(201).json({
@@ -61,23 +62,21 @@ const getMyProducts = async (req, res) => {
 // Updating the product
 const updateProduct = async (req, res) => {
     try {
+        const updateData = { ...req.body }
+        if (req.file?.path) updateData.image = req.file.path
+
         const product = await Product.findOneAndUpdate(
             { _id: req.params.id, vendor: req.user.userId },
-            req.body,
+            updateData,
             { new: true }
         )
 
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' })
-        }
-
+        if (!product) return res.status(404).json({ message: 'Product not found' })
         res.json({ message: 'Product updated successfully', product })
-
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message })
     }
 }
-
 
 // Deleting the product 
 const deleteProduct = async (req, res) => {

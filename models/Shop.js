@@ -20,7 +20,7 @@ const shopSchema = new mongoose.Schema({
     required: true
   },
   location: {
-    type: {             
+    type: {
       type: String,
       enum: ['Point'],
       default: 'Point'
@@ -38,6 +38,10 @@ const shopSchema = new mongoose.Schema({
   isOpen: {
     type: Boolean,
     default: true
+  },
+  image: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true })
 

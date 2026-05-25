@@ -3,9 +3,9 @@ const router = express.Router()
 const authMiddleware = require('../middleware/auth')
 const { createShop, getMyShop, updateShop, getAllShops, getShopById } = require('../controllers/shopController')
 
-router.post('/create', authMiddleware, createShop)
+router.post('/create', authMiddleware, upload.single('image'), createShop)  // This fiels name 'image' should be match with the formdata which is dent by fronted
 router.get('/my-shop', authMiddleware, getMyShop)
-router.put('/update', authMiddleware, updateShop)
+router.put('/update', authMiddleware, upload.single('image'), updateShop)
 router.get('/all', getAllShops)
 router.get('/:id', getShopById)
 
