@@ -21,11 +21,12 @@ const createShop = async (req, res) => {
             description,
             contact,
             image: req.file?.path || '',
-            location: {
+            location: { 
                 type: 'Point',
                 coordinates: [parseFloat(longitude), parseFloat(latitude)],
                 address
-            }
+            }, 
+            address
         })
 
         res.status(201).json({ message: 'Shop created successfully', shop })
