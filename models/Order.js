@@ -34,7 +34,9 @@ const orderSchema = new mongoose.Schema({
     },
     paymentId: { type: String, default: null },
     paymentOrderId: { type: String, default: null },
-    iisPaid: { type: Boolean, default: false }
+    isPaid: { type: Boolean, default: false },
+    
+    isReviewed: { type: Boolean, default: false }
 }, { timestamps: true })
 
 module.exports = mongoose.model('Order', orderSchema)

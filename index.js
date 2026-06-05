@@ -7,6 +7,7 @@ const shopRoutes = require('./routes/shop')
 const productRoutes = require('./routes/product')
 const orderRoutes = require('./routes/order')
 const analyticsRoutes = require('./routes/analytics')
+const reviewRoutes = require('./routes/review')
 
 dotenv.config()
 
@@ -37,6 +38,8 @@ app.use('/api/product', productRoutes)
 app.use('/api/order', orderRoutes)
 // For getting analytic like totalsale , mostsales_item
 app.use('/api/analytics', analyticsRoutes)
+// For the review 
+app.use('/api/review', reviewRoutes)
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is running' })

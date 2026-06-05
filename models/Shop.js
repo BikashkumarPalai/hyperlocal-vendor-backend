@@ -42,6 +42,17 @@ const shopSchema = new mongoose.Schema({
   image: {
     type: String,
     default: ''
+  },
+  averageRating: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 5
+  },
+  totalRatings: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 }, { timestamps: true })
 
