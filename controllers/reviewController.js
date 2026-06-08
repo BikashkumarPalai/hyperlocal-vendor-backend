@@ -2,6 +2,7 @@ const Review = require('../models/Review')
 const Order = require('../models/Order')
 const Shop = require('../models/Shop')
 const Product = require('../models/Product')
+const mongoose = require('mongoose')
 
 
 const recalculateShopRating = async (shopId) => {
@@ -33,7 +34,7 @@ const recalculateShopRating = async (shopId) => {
 const recalculateProductRatings = async (productIds) => {
     for (const productId of productIds) {
         const result = await Review.aggregate([
-            { $unwind: '$productReviews' },                              
+            { $unwind: '$productReviews' },
             { $match: { 'productReviews.product': productId } },
             {
                 $group: {
@@ -57,13 +58,13 @@ const recalculateProductRatings = async (productIds) => {
         }
     }
 }
- 
+
 const submitReview = async (req, res) => {
     try {
         const { orderId, shopRating, shopComment, productReviews } = req.body
         const customerId = req.user.userId
 
-         if (!orderId || !shopRating) {
+        if (!orderId || !shopRating) {
             return res.status(400).json({ message: 'orderId and shopRating are required' })
         }
 
@@ -147,7 +148,9 @@ const submitReview = async (req, res) => {
         await Order.findByIdAndUpdate(orderId, { isReviewed: true })
 
 
-        const productIdsToUpdate = sanitizedProductReviews.map(pr => pr.product)
+        const productIdsToUpdate = sanitizedProductReviews.map(pr =>
+            new mongoose.Types.ObjectId(pr.product)
+        )
 
         await Promise.all([
             recalculateShopRating(order.shop),
